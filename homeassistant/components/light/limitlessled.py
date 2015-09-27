@@ -43,7 +43,13 @@ def setup_platform(hass, config, add_devices_callback, discovery_info=None):
     """ Gets the LimitlessLED lights. """
     import ledcontroller
 
-    bridges = config['bridges']
+    # Handle old configuration format:
+    bridges = []
+    if 'bridges' in config:
+        bridges = config['bridges']
+    else:
+        bridges.append(config)
+
     i = 0
     for bridge in bridges:
         bridge['id'] = i
