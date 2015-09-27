@@ -24,6 +24,7 @@ light:
       group_1_name: Living Room
       group_2_name: Bedroom
       group_3_name: Office
+      group_3_type: white
       group_4_name: Kitchen
     - host: 192.168.1.11
       group_2_name: Basement
@@ -60,8 +61,15 @@ def setup_platform(hass, config, add_devices_callback, discovery_info=None):
     lights = []
     for bridge in bridges:
         for i in range(1, 5):
-            if 'group_%d_name' % (i) in bridge:
-                lights.append(LimitlessLED(pool, bridge['id'], i, bridge['group_%d_name' % (i)]))
+            name_key = 'group_%d_name' % i
+            type_key = 'group_%d_type' % i
+            if name_key in bridge:
+                if type_key in bridge and bridge[type_key] == 'white':
+                    lights.append(LimitlessLEDWhite(pool, bridge['id'], i,
+                                                    bridge[name_key]))
+                else:
+                    lights.append(LimitlessLED(pool, bridge['id'], i,
+                                               bridge[name_key]))
 
     add_devices_callback(lights)
 
@@ -154,6 +162,51 @@ class LimitlessLED(Light):
                           self._xy_to_led_color(self._xy_color), self.group)
         self.pool.execute(self.controller_id, "set_brightness",
                           self._brightness / 255.0, self.group)
+        self.update_ha_state()
+
+    def turn_off(self, **kwargs):
+        """ Turn the device off. """
+        self._state = False
+        self.pool.execute(self.controller_id, "off", self.group)
+        self.update_ha_state()
+
+
+class LimitlessLEDWhite(Light):
+    """ Represents a White LimitlessLED light """
+
+    def __init__(self, pool, controller_id, group, name):
+        self.pool = pool
+        self.controller_id = controller_id
+        self.group = group
+
+        self.pool.execute(self.controller_id, "set_group_type", self.group,
+                          "white")
+
+        # LimitlessLEDs don't report state, we have track it ourselves.
+        self.pool.execute(self.controller_id, "off", self.group)
+
+        self._name = name or DEVICE_DEFAULT_NAME
+        self._state = False
+
+    @property
+    def should_poll(self):
+        """ No polling needed. """
+        return False
+
+    @property
+    def name(self):
+        """ Returns the name of the device if any. """
+        return self._name
+
+    @property
+    def is_on(self):
+        """ True if device is on. """
+        return self._state
+
+    def turn_on(self, **kwargs):
+        """ Turn the device on. """
+        self._state = True
+        self.pool.execute(self.controller_id, "on", self.group)
         self.update_ha_state()
 
     def turn_off(self, **kwargs):
