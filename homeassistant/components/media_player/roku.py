@@ -33,22 +33,6 @@ SUPPORT_ROKU = SUPPORT_PREVIOUS_TRACK | SUPPORT_NEXT_TRACK |\
     SUPPORT_PLAY_MEDIA | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE |\
     SUPPORT_SELECT_SOURCE | SUPPORT_PLAY
 
-SERVICE_ROKU_SEARCH = 'roku_search'
-
-ATTR_TITLE = 'title'
-ATTR_SEASON = 'season'
-ATTR_LAUNCH = 'launch'
-ATTR_PROVIDERS = 'provider_id'
-ATTR_VIDEO_TYPE = 'video_type'
-
-ROKU_SEARCH_SCHEMA = MEDIA_PLAYER_SCHEMA.extend({
-    vol.Required(ATTR_TITLE): cv.string,
-    vol.Optional(ATTR_SEASON): cv.string,
-    vol.Optional(ATTR_LAUNCH): cv.string,
-    vol.Optional(ATTR_PROVIDERS): cv.string,
-    vol.Optional(ATTR_VIDEO_TYPE): cv.string
-})
-
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_HOST): cv.string,
 })
@@ -92,30 +76,6 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
                 ''.format(config.get(CONF_HOST)),
                 title=NOTIFICATION_TITLE,
                 notification_id=NOTIFICATION_ID)
-
-    def search_handler(call):
-        for roku in service_to_entities(call):
-            if call.service == SERVICE_ROKU_SEARCH:
-                title = call.data.get(ATTR_TITLE)
-                season = call.data.get(ATTR_SEASON)
-                launch = call.data.get(ATTR_LAUNCH)
-                provider_id = call.data.get(ATTR_PROVIDER_ID)
-                video_type = call.data.get(ATTR_VIDEO_TYPE)
-                roku.search(title, season, launch, provider_id, video_type)
-
-    def service_to_entities(call):
-        """Return the known devices that a service call mentions."""
-        entity_ids = extract_entity_ids(hass, call)
-        if entity_ids:
-            entities = [entity for entity in rokus
-                        if entity.entity_id in entity_ids]
-        else:
-            entities = rokus
-
-        return entities
-
-    hass.services.register(DOMAIN, SERVICE_ROKU_SEARCH, search_handler, 
-                           schema=ROKU_SEARCH_SCHEMA)
 
     add_devices(rokus)
 
@@ -278,7 +238,8 @@ class RokuDevice(MediaPlayerDevice):
                 channel = self.roku[source]
                 channel.launch()
 
-    def search(self, title, season=None, launch=None, provider_id=None, video_type=None):
+    def video_search_and_play(self, title, season=None, launch=None,
+                              provider_id=None, video_type=None):
         """Search on roku."""
         if self.current_app is not None:
             self.roku.search(title, season, launch, provider_id, video_type)
