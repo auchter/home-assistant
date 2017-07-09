@@ -42,7 +42,7 @@ class PowermateController(Entity, powermate.PowermateDelegate):
     def call(self, action):
         if action not in self.actions:
             return
-        call_from_config(self.hass, self.actions[action], blocking=True)
+        call_from_config(self.hass, self.actions[action], blocking=False)
 
     def on_connect(self):
         self._state = True
