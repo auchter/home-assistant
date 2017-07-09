@@ -32,7 +32,7 @@ class DenonMain(MediaPlayerDevice):
         self._source = None
 
     def update(self):
-        with self._denon.lock:
+        with self._denon.denon.lock:
             self._powered_on = self._denon.powered_on()
             self._volume = self._denon.get_volume()
             self._muted = self._denon.muted()
