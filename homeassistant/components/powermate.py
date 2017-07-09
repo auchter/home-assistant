@@ -46,11 +46,11 @@ class PowermateController(Entity, powermate.PowermateDelegate):
 
     def on_connect(self):
         self._state = True
-        self.update_ha_state()
+        self.schedule_update_ha_state()
 
     def on_disconnect(self):
         self._state = False
-        self.update_ha_state()
+        self.schedule_update_ha_state()
 
     def on_press(self):
         self.call('press')
@@ -72,7 +72,7 @@ class PowermateController(Entity, powermate.PowermateDelegate):
 
     def on_battery_report(self, val):
         self.battery = val
-        self.update_ha_state()
+        self.schedule_update_ha_state()
 
 
 def setup(hass, config):
