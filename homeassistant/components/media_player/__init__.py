@@ -58,6 +58,7 @@ CONTENT_TYPE_HEADER = 'Content-Type'
 SERVICE_PLAY_MEDIA = 'play_media'
 SERVICE_SELECT_SOURCE = 'select_source'
 SERVICE_CLEAR_PLAYLIST = 'clear_playlist'
+SERVICE_VIDEO_SEARCH_AND_PLAY = 'video_search_and_play'
 
 ATTR_MEDIA_VOLUME_LEVEL = 'volume_level'
 ATTR_MEDIA_VOLUME_MUTED = 'is_volume_muted'
@@ -83,6 +84,11 @@ ATTR_INPUT_SOURCE = 'source'
 ATTR_INPUT_SOURCE_LIST = 'source_list'
 ATTR_MEDIA_ENQUEUE = 'enqueue'
 ATTR_MEDIA_SHUFFLE = 'shuffle'
+ATTR_VIDEO_TITLE = 'video_title'
+ATTR_VIDEO_SEASON = 'video_season'
+ATTR_VIDEO_LAUNCH = 'video_launch'
+ATTR_VIDEO_PROVIDERS = 'video_provider_id'
+ATTR_VIDEO_TYPE = 'video_type'
 
 MEDIA_TYPE_MUSIC = 'music'
 MEDIA_TYPE_TVSHOW = 'tvshow'
@@ -140,6 +146,14 @@ MEDIA_PLAYER_SET_SHUFFLE_SCHEMA = MEDIA_PLAYER_SCHEMA.extend({
     vol.Required(ATTR_MEDIA_SHUFFLE): cv.boolean,
 })
 
+VIDEO_SEARCH_AND_PLAY_SCHEMA = MEDIA_PLAYER_SCHEMA.extend({
+    vol.Required(ATTR_VIDEO_TITLE): cv.string,
+    vol.Optional(ATTR_VIDEO_SEASON): cv.string,
+    vol.Optional(ATTR_VIDEO_LAUNCH): cv.string,
+    vol.Optional(ATTR_VIDEO_PROVIDERS): cv.string,
+    vol.Optional(ATTR_VIDEO_TYPE): cv.string
+})
+
 SERVICE_TO_METHOD = {
     SERVICE_TURN_ON: {'method': 'async_turn_on'},
     SERVICE_TURN_OFF: {'method': 'async_turn_off'},
@@ -171,6 +185,9 @@ SERVICE_TO_METHOD = {
     SERVICE_SHUFFLE_SET: {
         'method': 'async_set_shuffle',
         'schema': MEDIA_PLAYER_SET_SHUFFLE_SCHEMA},
+    SERVICE_VIDEO_SEARCH_AND_PLAY: {
+        'method': 'async_video_search_and_play',
+        'schema': VIDEO_SEARCH_AND_PLAY_SCHEMA},
 }
 
 ATTR_TO_PROPERTY = [
@@ -382,6 +399,8 @@ def async_setup(hass, config):
         elif service.service == SERVICE_SHUFFLE_SET:
             params[ATTR_MEDIA_SHUFFLE] = \
                 service.data.get(ATTR_MEDIA_SHUFFLE)
+        elif service.service == SERVICE_VIDEO_SEARCH_AND_PLAY:
+            params['title'] = service.data.get(ATTR_VIDEO_TITLE)
         target_players = component.async_extract_from_service(service)
 
         update_tasks = []
@@ -706,6 +725,21 @@ class MediaPlayerDevice(Entity):
         This method must be run in the event loop and returns a coroutine.
         """
         return self.hass.async_add_job(self.select_source, source)
+
+    def video_search_and_play(self, title, season=None, launch=None,
+                              provider_id=None, video_type=None):
+        """Search for a video and play it if found"""
+        raise NotImplementedError()
+
+    def async_video_search_and_play(self, title, season=None, launch=None,
+                                    provider_id=None, video_type=None):
+        """Search for a video and play it if found
+
+        This method must be run in the event loop and returns a coroutine.
+        """
+        return self.hass.async_add_job(
+            self.video_search_and_play, title, season, launch, provider_id,
+            video_type)
 
     def clear_playlist(self):
         """Clear players playlist."""

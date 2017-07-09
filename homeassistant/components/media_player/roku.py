@@ -11,9 +11,11 @@ import voluptuous as vol
 from homeassistant.components.media_player import (
     MEDIA_TYPE_VIDEO, SUPPORT_NEXT_TRACK, SUPPORT_PLAY_MEDIA,
     SUPPORT_PREVIOUS_TRACK, SUPPORT_VOLUME_MUTE, SUPPORT_VOLUME_SET,
-    SUPPORT_SELECT_SOURCE, SUPPORT_PLAY, MediaPlayerDevice, PLATFORM_SCHEMA)
+    SUPPORT_SELECT_SOURCE, SUPPORT_PLAY, MediaPlayerDevice, PLATFORM_SCHEMA,
+    MEDIA_PLAYER_SCHEMA, DOMAIN)
 from homeassistant.const import (
     CONF_HOST, STATE_IDLE, STATE_PLAYING, STATE_UNKNOWN, STATE_HOME)
+from homeassistant.helpers.service import extract_entity_ids
 import homeassistant.helpers.config_validation as cv
 import homeassistant.loader as loader
 
@@ -235,3 +237,11 @@ class RokuDevice(MediaPlayerDevice):
             else:
                 channel = self.roku[source]
                 channel.launch()
+
+    def video_search_and_play(self, title, season=None, launch=None,
+                              provider_id=None, video_type=None):
+        """Search on roku."""
+        if self.current_app is not None:
+            self.roku.search(title, season, launch, provider_id, video_type)
+
+

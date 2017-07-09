@@ -799,6 +799,11 @@ class KodiDevice(MediaPlayerDevice):
                 {"filter": {"artistid": int(artist_id)}}))
 
     @asyncio.coroutine
+    def async_get_movies(self):
+        """Get movie list."""
+        return (yield from self.server.VideoLibrary.GetMovies(['title']))
+
+    @asyncio.coroutine
     def async_find_artist(self, artist_name):
         """Find artist by name."""
         artists = yield from self.async_get_artists()
@@ -849,6 +854,24 @@ class KodiDevice(MediaPlayerDevice):
             _LOGGER.warning("No albums were found with artist: %s, album: %s",
                             artist_name, album_name)
             return None
+
+    @asyncio.coroutine
+    def async_video_search_and_play(self, title, season=None, launch=None,
+                                    provider_id=None, video_type=None):
+        # TODO: support TV shows
+        # TODO: support the remaining parameters or reconsider
+        # TODO: fuzzier search? maybe some levenshtein or similar...
+
+        movies = yield from self.async_get_movies()
+        try:
+            out = self._find(title, [m['title'] for m in movies['movies']])
+            movie_id = movies['movies'][out[0][0]]['movieid']
+            item = {"item": {"movieid": int(movie_id)}}
+            return (yield from self.server.Player.Open(item))
+        except KeyError:
+            print("No movie found!")
+
+        return None
 
     @staticmethod
     def _find(key_word, words):
